@@ -1,4 +1,4 @@
-- [0. Home Page](README)
+- [Home Page](README)
 - [1. Introduction & Overview](1introduction-and-overview)
 - [2. Product Information](2product-information)
 - [3. Processes & Workflows](3processes-and-workflows)
