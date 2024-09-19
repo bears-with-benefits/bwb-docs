@@ -1,2 +1,2 @@
 - [Welcome](README)
-- [Example Second Page](second-page)
+- [Quick Access](quick-access)
