@@ -10,7 +10,7 @@
 
   <div style="flex: 1 1 30%; padding: 20px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); text-align: center;">
     <h3>Monday SCRUM Board</h3>
-    <img src="https://ponroy.monday.com/favicon.ico" alt="Monday.com Logo" style="width: 32px; height: 32px; vertical-align: middle;">
+    <img src="https://monday.com/p/wp-content/uploads/2023/03/Logo-monday.com-2.png" alt="Monday.com Logo" style="width: 32px; height: 32px; vertical-align: middle;">
     <p><a href="https://ponroy.monday.com/boards/7033000094" target="_blank">Visit Website</a></p>
   </div>
 
