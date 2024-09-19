@@ -1,7 +1,4 @@
-# Welcome to Bears with Benefits Documentation
-This site serves as a comprehensive resource for Bears with Benefits team members. You’ll find all the necessary information to work efficiently and stay aligned with our company’s goals.
+# Introduction and Overview
+## Company Mission & Vision
 
-# Company Mission & Vision
-
-
-# How to Use This Documentation
+## How to Use This Documentation
