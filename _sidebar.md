@@ -6,6 +6,7 @@
 - [5. Marketing & Branding](5marketing-and-branding)
 - [6. Customer Support & Communication](6customer-support-and-communication)
 - [7. Technical Documentation](7technical-documentation)
+  - [Custom Cart and Discount Logic](custom-cart-and-discount-logic.md)
 - [8. HR & Company Policies](8hr-and-company-policies)
 - [9. Training & Development](9training-and-development)
 - [10. Tools & Resources](10tools-and-resources)
