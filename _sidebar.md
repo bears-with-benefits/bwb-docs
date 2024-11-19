@@ -7,7 +7,7 @@
 - [6. Customer Support & Communication](6customer-support-and-communication)
 - [7. Technical Documentation](7technical-documentation)
   - [Custom Cart and Discount Logic](custom-cart-and-discount-logic.md)
-  - [Custom Cart Notes and Challenges](custom-cart-notes-and-challenges.md)
+  - [Custom Cart Notes and Challenges in Plain English](custom-cart-notes-and-challenges.md)
 - [8. HR & Company Policies](8hr-and-company-policies)
 - [9. Training & Development](9training-and-development)
 - [10. Tools & Resources](10tools-and-resources)
