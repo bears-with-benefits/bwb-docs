@@ -1,6 +1,6 @@
 ## Custom Cart and Discount Logic
 
-### 1. Fronend Logic `cart-items-custom.liquid` and `cart-discount-render.liquid`
+### 1. Frontend Logic `cart-items-custom.liquid` and `cart-discount-render.liquid`
 
 **Purpose**
 
