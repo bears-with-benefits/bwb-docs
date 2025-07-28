@@ -4,7 +4,7 @@ Welcome to the technical documentation section. Below are the key topics so far:
 
 ## Current Cart System (July 2025)
 
-- [Rebuy Smart Cart Discount System](rebuy-smart-cart-discount-system.md)  
+- [Rebuy SmartCart Discount System](rebuy-smartcart-discount-system.md)  
 
   **Current implementation** - Comprehensive documentation | 📥 [PDF Download](https://github.com/bears-with-benefits/bwb-docs/raw/main/assets/rebuy-smartcart-discount-system.pdf) (click "Download" button)
 
