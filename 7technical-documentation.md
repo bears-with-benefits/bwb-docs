@@ -6,7 +6,7 @@ Welcome to the technical documentation section. Below are the key topics so far:
 
 - [Rebuy SmartCart Discount System](rebuy-smartcart-discount-system.md)  
 
-  **Current implementation** - Comprehensive documentation | 📥 [PDF Download](https://github.com/bears-with-benefits/bwb-docs/raw/main/assets/rebuy-smartcart-discount-system.pdf) (click "Download" button)
+  **Current implementation** - Comprehensive documentation | 📥 [PDF Download](https://github.com/bears-with-benefits/bwb-docs/raw/main/assets/rebuy-smartcart-discount-system.pdf)
 
 ## Legacy Documentation (Deprecated)
 
