@@ -7,7 +7,7 @@
 - [5. Marketing & Branding](5marketing-and-branding)
 - [6. Customer Support & Communication](6customer-support-and-communication)
 - [7. Technical Documentation](7technical-documentation)
-  - [Rebuy Smart Cart Discount System](rebuy-smart-cart-discount-system.md)
+  - [Rebuy Smart Cart Discount System](rebuy-smartcart-discount-system.md)
   - [Custom Cart and Discount Logic](custom-cart-and-discount-logic.md) **[DEPRECATED]**
   - [Custom Cart Notes and Challenges](custom-cart-notes-and-challenges.md) **[DEPRECATED]**
 - [8. HR & Company Policies](8hr-and-company-policies)
