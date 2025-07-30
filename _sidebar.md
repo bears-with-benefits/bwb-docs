@@ -7,9 +7,11 @@
 - [5. Marketing & Branding](5marketing-and-branding)
 - [6. Customer Support & Communication](6customer-support-and-communication)
 - [7. Technical Documentation](7technical-documentation)
-  - [Rebuy Smartcart Discount System](rebuy-smartcart-discount-system.md)
-  - [Custom Cart and Discount Logic](custom-cart-and-discount-logic.md) **[DEPRECATED]**
-  - [Custom Cart Notes and Challenges](custom-cart-notes-and-challenges.md) **[DEPRECATED]**
+  - [Website relaunch - updating the Smartcart per country](smartcart-redesign-update.md)
+  - [Current Cart System (July 2025)](current-cart-system.md)
+  - [Rebuy SmartCart Discount System](rebuy-smartcart-discount-system.md)
+  - [Legacy Documentation - Custom Cart and Discount Logic (Deprecated)](custom-cart-and-discount-logic.md)
+  - [Legacy Documentation - Custom Cart Notes and Challenges (Deprecated)](custom-cart-notes-and-challenges.md)
 - [8. HR & Company Policies](8hr-and-company-policies)
 - [9. Training & Development](9training-and-development)
 - [10. Tools & Resources](10tools-and-resources)
