@@ -374,7 +374,7 @@ Enable custom template - here we add a data attribute for the callbacks / discou
 ## Discount Input :
 No changes here really ->
 
-![Screenshot 2025-07-30 at 11.18.12.png](Screenshot 2025-07-30 at 11.18.12.png)
+![Discount input settings](assets/discount-input-settings.png)
 
 ## Widget :
 
@@ -688,11 +688,11 @@ Widget settings in the Admin -> use the same datasource as the old widget. Retur
 Copy the following widget layout settings ->
 
 
-![Screenshot 2025-07-30 at 11.28.16.png](Screenshot 2025-07-30 at 11.28.16.png)
+![Widget layout settings 1](assets/1widgetlayoutsettings.png)
 
-![Screenshot 2025-07-30 at 11.28.31.png](Screenshot 2025-07-30 at 11.28.31.png)
+![Widget layout settings 2](assets/2widgetlayoutsettings.png)
 
-![Screenshot 2025-07-30 at 11.28.37.png](Screenshot 2025-07-30 at 11.28.37.png)
+![Widget layout settings 3](assets/3widgetlayoutsettings.png)
 
 # **FOOTER :**
 
@@ -1078,14 +1078,14 @@ if (pageOverlay) {
 }
 ```
 
-Here is the cart-redesign.css file as per teh DE store, which also contains copious notes for what is going on (thankfully).
+Here is the cart-redesign.css file as per the DE store, which also contains copious notes for what is going on (thankfully).
 
 
 ```css
 /* Notes -> IMPORTANT
 - Use this SmartCart to preview in the CLI, I have made some changes in the Admin - 
 ?preview_smart_cart=9998&viewcart=true&cart_version=2
-- our assets folder now contains ready-event-callback.js, and a variety of Vue template files which correspond to the custom component tempalte in the Rebuy Smart Cart Admin (e.g. cart items, etc.) These are just so that I can see the code outside of the rebuy Admin, and won't be uploaded to the store CDN when we merge (or even when I pull request into the main redesign branch). Note -> local templates vs. Rebuy Admin templates - keep them in sync!
+- our assets folder now contains ready-event-callback.js, and a variety of Vue template files which correspond to the custom component template in the Rebuy Smart Cart Admin (e.g. cart items, etc.) These are just so that I can see the code outside of the rebuy Admin, and won't be uploaded to the store CDN when we merge (or even when I pull request into the main redesign branch). Note -> local templates vs. Rebuy Admin templates - keep them in sync!
 - Warenkorb + (number of items) - this is done by editing the header template within the Rebuy cart
 - Progress bar :  changed to Line Item mode in the Rebuy Admin, this adds the gift into the cart items (as per Figma).
 - We cannot alter the default icons in Rebuy AFAIK, only product images or default icons. Also, when the step is reached, we get a large TICK as opposed to just filling out the icon
@@ -1096,11 +1096,11 @@ Here is the cart-redesign.css file as per teh DE store, which also contains copi
 - Line item layout - edited the template to add a top and bottom wrapper to group the elements like the Figma
 - Grid for component layout, flexbox to arrange the elements within the component
 - Delivery note -> the Schnelle Lieferung... bit is a Custom Code Block within the rebuy Admin which is simply positioned and styled as desired. SVG added inline in the HTML in the Rebuy Admin for the code block.
-- cross sell widget : this is using spilde.js, a library designed for vertical carousels
+- cross sell widget : this is using splide.js, a library designed for vertical carousels
 - new widget created for the new cart, so I could style and test it without affecting our live one. Created with the same data source as the live one, new number is 226077.
 - Metaobjects are not available in Rebuy widgets, worked around this by adding a resolver script to theme.liquid. This is combined with a helper function in the Rebuy Admin, in the Ready callback specifically. 
 - we use an entire custom template for the cross sell widget, which is custom-rebuy-cart-widget-template.liquid. The edits made are documented in there.
-- The Footer - Rebuy has a quirk whereby the discoutn input and the apply button MUST have text in them, in order for the Rebuy tempalte to render them. If they are left blank, they are not filled. So, we use CSS to remove the Rabattcode and Anwenden text
+- The Footer - Rebuy has a quirk whereby the discount input and the apply button MUST have text in them, in order for the Rebuy template to render them. If they are left blank, they are not filled. So, we use CSS to remove the Rabattcode and Anwenden text
 - Rebuy also only renders the discount input if the cart has an item in it, so we override this display : none with CSS.
 - Removed "Zwischensumme" and "Jetzt sicher.." from the subtotal via the Rebuy Admin
 - we can add the subtotal to the button without re-writing the template, go to the checkout label and add -> zur Kasse <span class="cart-subtotal">{{cart.total_price | money}}</span>
