@@ -1078,6 +1078,1180 @@ if (pageOverlay) {
 }
 ```
 
-That is it. I think.
+Here is the cart-redesign.css file as per teh DE store, which also contains copious notes for what is going on (thankfully).
 
 
+```css
+/* Notes -> IMPORTANT
+- Use this SmartCart to preview in the CLI, I have made some changes in the Admin - 
+?preview_smart_cart=9998&viewcart=true&cart_version=2
+- our assets folder now contains ready-event-callback.js, and a variety of Vue template files which correspond to the custom component tempalte in the Rebuy Smart Cart Admin (e.g. cart items, etc.) These are just so that I can see the code outside of the rebuy Admin, and won't be uploaded to the store CDN when we merge (or even when I pull request into the main redesign branch). Note -> local templates vs. Rebuy Admin templates - keep them in sync!
+- Warenkorb + (number of items) - this is done by editing the header template within the Rebuy cart
+- Progress bar :  changed to Line Item mode in the Rebuy Admin, this adds the gift into the cart items (as per Figma).
+- We cannot alter the default icons in Rebuy AFAIK, only product images or default icons. Also, when the step is reached, we get a large TICK as opposed to just filling out the icon
+- Cannot figure out how to emulate the layout in the figma in terms of the icons sitting on top of the bar so moving forward with current version for now
+- Note that the Ready callback in the Admin contains code which contains the logic for the progress bar dynamism
+- There is a regular expression in the event callback which removes the GRATIS or GESCHENK from the front of the progress bar gift, this will need to be altered in the other stores to match Regalo, Gift or similar
+- Our free gift setup works, due to the cart attribute differentiating our gifts from Rebuy's, even when they are both in as line items
+- Line item layout - edited the template to add a top and bottom wrapper to group the elements like the Figma
+- Grid for component layout, flexbox to arrange the elements within the component
+- Delivery note -> the Schnelle Lieferung... bit is a Custom Code Block within the rebuy Admin which is simply positioned and styled as desired. SVG added inline in the HTML in the Rebuy Admin for the code block.
+- cross sell widget : this is using spilde.js, a library designed for vertical carousels
+- new widget created for the new cart, so I could style and test it without affecting our live one. Created with the same data source as the live one, new number is 226077.
+- Metaobjects are not available in Rebuy widgets, worked around this by adding a resolver script to theme.liquid. This is combined with a helper function in the Rebuy Admin, in the Ready callback specifically. 
+- we use an entire custom template for the cross sell widget, which is custom-rebuy-cart-widget-template.liquid. The edits made are documented in there.
+- The Footer - Rebuy has a quirk whereby the discoutn input and the apply button MUST have text in them, in order for the Rebuy tempalte to render them. If they are left blank, they are not filled. So, we use CSS to remove the Rabattcode and Anwenden text
+- Rebuy also only renders the discount input if the cart has an item in it, so we override this display : none with CSS.
+- Removed "Zwischensumme" and "Jetzt sicher.." from the subtotal via the Rebuy Admin
+- we can add the subtotal to the button without re-writing the template, go to the checkout label and add -> zur Kasse <span class="cart-subtotal">{{cart.total_price | money}}</span>
+- BUT this displays both compare at and sale price in the button. We want only sale price. So, we need to then hide the subtotal block via CSS (can't do it in Rebuy), and also hide the compare-at price via CSS when used in the context of the checkout button . /* Hide compare-at price specifically when used in button context --->>> .cart-subtotal .rebuy-cart__flyout-subtotal-compare-amount {display: none !important;}
+- this in-button price in Rebuy ONLY shows the sale amount, pre-manual discount code entry. We get around this by adding a Rebuy method to the Admin Ready callbacks for the SmartCart - updateCartSubtotal(). Check the custom-rebuy-admin-ready-callbacks.js file to see it outside of the Rebuy Admin
+
+*/
+
+/* the following hides the gorgias chat and the csm wrapper just for dev purposes */
+#gorgias-chat-container,
+#csm-wrapper {
+    display: none !important;
+}
+
+/* Green Discount banner bar - taken from cart.css */
+#discount-banner {
+  background-color: #def2e7;
+  text-align: center;
+  display: none;
+  align-items: stretch;
+  justify-content: center;
+}
+#discount-banner span {
+  padding: 5px;
+  text-align: center;
+  color: #208e4e;
+  display: inline-block;
+}
+#discount-banner .icon-div {
+  width: 50px;
+  background: #2ecc71;
+  position: relative;
+}
+#discount-banner .icon-div svg {
+  color: #fff;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+}
+#discount-banner-text {
+  display: inline-block;
+  padding-left: 10px;
+}
+@media only screen and (max-width: 640px) {
+  #discount-banner span {
+    font-size: 12px;
+    text-align: left;
+  }
+  #discount-banner {
+    justify-content: flex-start;
+  }
+  #discount-banner .icon-div {
+    width: 90px;
+  }
+}
+
+/* ============================================
+   REBUY SMART CART REDESIGN
+   ============================================ */
+
+/* Hide default Shopify cart when smart cart is enabled */
+.smart-cart--enabled #sidebar-cart {
+  display: none !important;
+}
+
+.rebuy-cart__flyout {
+  gap: 0 !important;
+}
+
+/* ============================================
+   CART HEADER COMPONENT
+   ============================================ */
+
+/* Cart title - "Warenkorb" ('Dein' removed in Rebuy Admin) */
+[data-rebuy-component-id="title_bar"] {
+  margin: 0 !important;
+  color: var(--content-primary, #141618) !important;
+  font-family: var(--ff-display, Decoy) !important;
+  font-size: var(--size-d-s, 24px) !important;;
+  font-style: normal !important;
+  font-weight: 700 !important;
+  line-height: var(--lh-h-xl, 32px) !important;
+  letter-spacing: 0.48px !important;
+  text-transform: none !important;
+}
+
+[data-rebuy-component="cart-items"] {
+  padding: 0 20px !important; 
+}
+
+/* Overall progress bar component - add padding and spacing */
+[data-rebuy-component="progress-bar"] {
+  border-bottom: 1px solid #e5e5e5 !important;
+  padding: 0 20px 10px 20px !important;
+  margin-top: 12px !important;
+}
+
+/* Progress steps wrapper */
+[data-rebuy-component="progress-bar"] .rebuy-cart__progress-step-wrapper {
+  margin-bottom: 16px !important;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  position: relative !important;
+}
+
+/* Individual progress steps */
+[data-rebuy-component="progress-bar"] .rebuy-cart__progress-step {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  z-index: 2 !important;
+  position: relative !important;
+}
+
+/* Progress step icons (truck, gift icons) */
+[data-rebuy-component="progress-bar"] .rebuy-cart__progress-step-icon {
+  width: 20px !important;
+  height: 20px !important;
+  border-radius: 50% !important;
+  background: white !important;
+  border: 2px solid #D4D4D4 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin-bottom: 8px !important;
+}
+
+/* Completed progress step icons */
+[data-rebuy-component="progress-bar"] .rebuy-cart__progress-step.complete .rebuy-cart__progress-step-icon {
+  border-color: var(--brand-purple) !important;
+  background: var(--brand-purple) !important;
+  color: white !important;
+}
+
+/* Progress step labels */
+[data-rebuy-component="progress-bar"] .rebuy-cart__progress-step-label {
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  color: var(--color-text) !important;
+}
+
+/* Progress bar fill */
+[data-rebuy-component="progress-bar"] .rebuy-cart__progress-bar-meter-fill {
+  height: 5px !important;
+  border-radius: 3px !important;
+  background: var(--brand-purple) !important;
+  transition: width 0.3s ease !important;
+}
+/* Progress bar label */
+#rebuy-cart__progress-bar-meter-label {
+  position: relative !important;
+  align-items: center !important;
+  padding: 8px !important;
+  border-radius: 4px !important;
+  background: var(--brand-lightPurple, #E2DBF8) !important;
+  font-size: 14px !important;
+  color: black !important;
+  text-align: left !important;
+  margin-top: 4px !important;
+  margin-bottom: 0 !important;
+}
+
+/* Arrow pointing upward to the next tier */
+#rebuy-cart__progress-bar-meter-label::after {
+  content: '';
+  position: absolute;
+  top: -6px !important;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 8px solid var(--brand-lightPurple, #E2DBF8);
+  
+  /* Default position - first tier */
+  left: calc(16.66% - 8px) !important;
+}
+
+/* Arrow pointing to first tier (Free Shipping) */
+#rebuy-cart__progress-bar-meter-label.arrow-tier-0::after {
+  left: calc(16.66% - 8px) !important;
+}
+
+/* Arrow pointing to second tier */
+#rebuy-cart__progress-bar-meter-label.arrow-tier-1::after {
+  left: calc(50% - 8px) !important;
+}
+
+/* Arrow pointing to third tier */
+#rebuy-cart__progress-bar-meter-label.arrow-tier-2::after {
+  left: calc(83.33% - 8px) !important;
+}
+
+/* Dropdown arrow inside the label */
+.dropdown-arrow {
+  margin-left: 8px !important;
+  transition: transform 0.2s ease !important;
+  color: #333 !important;
+  width: auto !important;
+  height: auto !important;
+  border: none !important;
+  display: inline-block !important;
+  align-items: center !important;
+  position: relative !important;
+  top: 0.75px !important; 
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg) !important;
+}
+
+/* Dropdown content - better layout */
+.tier-dropdown {
+  margin-top: 8px !important;
+  background: var(--brand-lightPurple, #E2DBF8) !important;
+  border-radius: var(--radius-radius-xs, 4px) !important;
+  padding: 8px !important;
+  width: 100% !important;
+}
+
+.dropdown-gift-info {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  background: white !important;
+  padding: 12px !important;
+  border-radius: 4px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.gift-image {
+  width: 40px !important;
+  height: 40px !important;
+  object-fit: cover !important;
+  border-radius: 4px !important;
+  flex-shrink: 0 !important;
+}
+
+.gift-details {
+  flex: 1 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.gift-name {
+  font-weight: 700 !important;
+  color: var(--color-text) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  line-height: 1.2 !important;
+}
+
+.free-shipping-message {
+  padding: 12px 0px 0px;
+  background: white;
+}
+
+.shipping-message-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #000;
+}
+
+/* Grey box container for empty cart */
+.rebuy-cart__flyout-empty-cart {
+  padding: var(--size-d-xs, 16px) !important;
+  border-radius: 8px !important;
+  background: var(--brand-lightGrey, #F6F6F6) !important;
+  margin: 16px 0px !important;
+}
+
+/* Hide empty paragraph elements that add unwanted spacing */
+.rebuy-cart__flyout-empty-cart p:empty,
+.rebuy-cart__flyout-empty-cart p:has(br:only-child) {
+  display: none !important;
+}
+
+/* Empty cart message - "Dein Warenkorb is leer." */
+.rebuy-cart__flyout-empty-cart p {
+  color: var(--content-primary, #141618) !important;
+  text-align: center !important;
+  font-family: var(--family-heading, "Halis R") !important;
+  font-size: var(--size-heading-s, 18px) !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+  line-height: var(--lineHeight-2xs, 16px) !important;
+  letter-spacing: -0.72px !important;
+}
+
+/* Empty cart button - "zu den Produkten" */
+.rebuy-cart__flyout-empty-cart a {
+  display: flex !important;
+  height: 58px !important;
+  padding: 20px 32px !important;
+  justify-content: center !important;
+  align-items: center !important;
+  gap: 8px !important;
+  align-self: stretch !important;
+  border-radius: 178.044px !important;
+  background: var(--brand-black, #000) !important;
+  letter-spacing: 0.28px;;
+  font-family: var(--ff-body) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  color: white !important;
+  text-decoration: none !important;
+}
+
+/* ==================================================================
+ CART LINE ITEMS - Grid for elements, flexbox to organise within them 
+ ==================================================================== */
+
+ /* Removes the border below the button in the empty cart. Border for line items taken care of b the line items themselves */
+ [data-rebuy-component="cart-items"] {
+  border-width: 0 !important;
+  border-style: none !important;
+  border-color: none !important;
+ }
+
+/* Main line item container */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item {
+  display: flex !important;
+  gap: 12px !important;
+  border-bottom: 1px solid #e5e5e5 !important;
+  padding-bottom: 16px !important; /* Space between content and border */
+  margin-bottom: 16px !important;
+}
+
+/* Remove margin from the last item */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+
+/* Info container - simple flex column */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-info {
+  flex: 1 !important;
+  display: flex !important;
+}
+
+/* TOP SECTION - just stack everything vertically */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-top {
+  display: flex !important;
+  flex-direction: column !important;
+  margin-bottom: 6px !important;
+}
+
+/* BOTTOM SECTION - horizontal row for controls */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-bottom {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  width: 100% !important;
+}
+
+/* Position quantity stepper at the start (left) */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-quantity {
+  order: 1 !important;
+  margin-right: auto !important; 
+  margin-top: 0 !important;
+}
+
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-quantity-widget {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border-width: 0px !important;
+}
+
+/* Quantity buttons - circular design */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-quantity-widget-button {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 100px !important;
+  border: 1px solid var(--brand-black, #000) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  min-width: 48px !important;
+  max-width: 48px !important;
+  flex-shrink: 0 !important; /* Prevent flex scaling */
+  box-sizing: border-box !important;
+  background: white !important;
+  position: relative !important;
+}
+
+/* Hide Font Awesome icons */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-quantity-widget-button i {
+  display: none !important;
+}
+
+/* Plus icon via pseudo-element */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-quantity-widget-button:last-child::before {
+  content: '';
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0 !important;
+  aspect-ratio: 1/1 !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='21' height='21' viewBox='0 0 21 21' fill='none'%3E%3Cpath d='M18.0684 10.6465C18.0684 10.8951 17.9696 11.1336 17.7938 11.3094C17.618 11.4852 17.3795 11.584 17.1309 11.584H11.1934V17.5215C11.1934 17.7701 11.0946 18.0086 10.9188 18.1844C10.743 18.3602 10.5045 18.459 10.2559 18.459C10.0072 18.459 9.76876 18.3602 9.59295 18.1844C9.41713 18.0086 9.31836 17.7701 9.31836 17.5215V11.584H3.38086C3.13222 11.584 2.89376 11.4852 2.71795 11.3094C2.54213 11.1336 2.44336 10.8951 2.44336 10.6465C2.44336 10.3978 2.54213 10.1594 2.71795 9.98357C2.89376 9.80776 3.13222 9.70898 3.38086 9.70898H9.31836V3.77148C9.31836 3.52284 9.41713 3.28439 9.59295 3.10857C9.76876 2.93276 10.0072 2.83398 10.2559 2.83398C10.5045 2.83398 10.743 2.93276 10.9188 3.10857C11.0946 3.28439 11.1934 3.52284 11.1934 3.77148V9.70898H17.1309C17.3795 9.70898 17.618 9.80776 17.7938 9.98357C17.9696 10.1594 18.0684 10.3978 18.0684 10.6465Z' fill='black'/%3E%3C/svg%3E") !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  display: inline-block !important;
+}
+
+/* Minus icon via pseudo-element */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-quantity-widget-button:first-child::before {
+  content: '';
+  width: 20px !important;
+  height: 2px !important;
+  background: black !important;
+  display: inline-block !important;
+}
+
+/* Button hover states */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-quantity-widget-button:hover {
+  border-color: var(--brand-black, #000) !important;
+}
+
+/* Quantity number styling */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-quantity-widget-label {
+  font-family: var(--ff-body, "Halis R") !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
+  min-width: 24px !important;
+  text-align: center !important;
+  line-height: 22px !important;
+  border-style: none !important;
+}
+
+
+/* Keep remove button on the right */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-remove {
+  position: static !important;
+  top: unset !important;
+  right: unset !important;
+  margin: 0 !important;
+  order: 2 !important;
+  width: 20px !important;
+  height: 48px !important;
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-remove i {
+  display: none !important;
+}
+
+/* New trash / line item remove icon via psuedo-element */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-remove::before {
+  content: '';
+  width: 20px !important;
+  height: 20px !important;
+  flex-shrink: 0 !important;
+  aspect-ratio: 1/1 !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='21' viewBox='0 0 20 21' fill='none'%3E%3Cpath d='M16.875 4.39648H14.0625V3.45898C14.0625 2.87882 13.832 2.32242 13.4218 1.91219C13.0116 1.50195 12.4552 1.27148 11.875 1.27148H8.125C7.54484 1.27148 6.98844 1.50195 6.5782 1.91219C6.16797 2.32242 5.9375 2.87882 5.9375 3.45898V4.39648H3.125C2.87636 4.39648 2.6379 4.49526 2.46209 4.67107C2.28627 4.84689 2.1875 5.08534 2.1875 5.33398C2.1875 5.58262 2.28627 5.82108 2.46209 5.9969C2.6379 6.17271 2.87636 6.27148 3.125 6.27148H3.4375V16.8965C3.4375 17.3109 3.60212 17.7083 3.89515 18.0013C4.18817 18.2944 4.5856 18.459 5 18.459H15C15.4144 18.459 15.8118 18.2944 16.1049 18.0013C16.3979 17.7083 16.5625 17.3109 16.5625 16.8965V6.27148H16.875C17.1236 6.27148 17.3621 6.17271 17.5379 5.9969C17.7137 5.82108 17.8125 5.58262 17.8125 5.33398C17.8125 5.08534 17.7137 4.84689 17.5379 4.67107C17.3621 4.49526 17.1236 4.39648 16.875 4.39648ZM7.8125 3.45898C7.8125 3.3761 7.84542 3.29662 7.90403 3.23801C7.96263 3.17941 8.04212 3.14648 8.125 3.14648H11.875C11.9579 3.14648 12.0374 3.17941 12.096 3.23801C12.1546 3.29662 12.1875 3.3761 12.1875 3.45898V4.39648H7.8125V3.45898ZM14.6875 16.584H5.3125V6.27148H14.6875V16.584ZM9.0625 8.77148V13.7715C9.0625 14.0201 8.96373 14.2586 8.78791 14.4344C8.6121 14.6102 8.37364 14.709 8.125 14.709C7.87636 14.709 7.6379 14.6102 7.46209 14.4344C7.28627 14.2586 7.1875 14.0201 7.1875 13.7715V8.77148C7.1875 8.52284 7.28627 8.28439 7.46209 8.10857C7.6379 7.93276 7.87636 7.83398 8.125 7.83398C8.37364 7.83398 8.6121 7.93276 8.78791 8.10857C8.96373 8.28439 9.0625 8.52284 9.0625 8.77148ZM12.8125 8.77148V13.7715C12.8125 14.0201 12.7137 14.2586 12.5379 14.4344C12.3621 14.6102 12.1236 14.709 11.875 14.709C11.6264 14.709 11.3879 14.6102 11.2121 14.4344C11.0363 14.2586 10.9375 14.0201 10.9375 13.7715V8.77148C10.9375 8.52284 11.0363 8.28439 11.2121 8.10857C11.3879 7.93276 11.6264 7.83398 11.875 7.83398C12.1236 7.83398 12.3621 7.93276 12.5379 8.10857C12.7137 8.28439 12.8125 8.52284 12.8125 8.77148Z' fill='%23696C78'/%3E%3C/svg%3E") !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  display: inline-block !important;
+}
+
+/* Style the discount message */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-discount-message {
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 1 !important;
+  align-self: stretch !important;
+  overflow: hidden !important;
+  color: var(--brand-green, #35A700) !important;
+  text-overflow: ellipsis !important;
+  font-family: var(--family-body, "Halis R") !important;
+  font-size: var(--size-body-s, 14px) !important;
+  font-style: normal !important;
+  font-weight: 700 !important;
+  line-height: var(--lineHeight-2xs, 16px) !important;
+  margin: 4px 0 !important; /* Space between variant and price */
+}
+
+/* Add "Code: " prefix */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-discount-message::before {
+  content: 'Code: ' !important;
+}
+
+
+/* ============================================
+ CART LINE ITEMS - TYPOGRAPHY STYLING
+ ============================================ */
+
+/* Product Title - matching Figma specs exactly */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-product-title {
+  overflow: hidden !important;
+  color: var(--brand-black, #000) !important;
+  text-overflow: ellipsis !important;
+  font-family: var(--ff-body, "Halis R") !important;
+  font-size: var(--size-body-m, 16px) !important;
+  font-style: normal !important;
+  font-weight: 700 !important;
+  line-height: 20px !important;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 1 !important;
+  align-self: stretch !important;
+  text-decoration: none !important;
+  margin: 0 !important;
+}
+
+/* Variant Title - matching Figma specs exactly */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-variant-title {
+  overflow: hidden !important;
+  color: var(--brand-midGrey, #696C78) !important;
+  text-overflow: ellipsis !important;
+  font-family: var(--ff-body, "Halis R") !important;
+  font-size: var(--size-body-s, 14px) !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  line-height: var(--lh-body-s, 16px) !important;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical !important;
+  -webkit-line-clamp: 1 !important;
+  align-self: stretch !important;
+  margin: 0 0 4px 0!important;
+}
+
+
+/* Price Container - matching Figma layout */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-price {
+  display: flex !important;
+  height: 26px !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+  align-items: flex-start !important;
+  gap: 0px !important;
+  margin: 0 !important;
+}
+
+/* Regular Price - main price styling */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-price .rebuy-money {
+  font-family: var(--ff-body, "Halis R") !important;
+  font-size: var(--size-body-m, 16px) !important;
+  font-weight: 700 !important;
+  line-height: 20px !important;
+  color: var(--brand-black, #000) !important;
+  margin: 0 !important;
+}
+
+/* Sale Price (when on sale) */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-price .rebuy-money.sale {
+  font-family: var(--ff-body, "Halis R") !important;
+  font-size: var(--size-body-m, 16px) !important;
+  font-weight: 700 !important;
+  line-height: 20px !important;
+  color: var(--brand-hotRed, #ff0000) !important;
+  text-decoration: none !important;
+}
+
+/* Compare At Price (strikethrough original price) */
+[data-rebuy-component="cart-items"] .rebuy-cart__flyout-item-price .rebuy-money.compare-at {
+  font-family: var(--ff-body, "Halis R") !important;
+  font-size: var(--size-body-s, 14px) !important;
+  font-weight: 400 !important;
+  line-height: 16px !important;
+  color: var(--brand-midGrey, #696C78) !important;
+  text-decoration: line-through !important;
+}
+
+/* ============================================
+ CROSS-SELL WIDGET REDESIGN - HORIZONTAL CARDS
+ ============================================ */
+
+/* Widget container */
+[data-rebuy-component=cross-sell-widget] {
+    padding: 0 !important;
+}
+
+/* Widget title */
+#rebuy-widget-226077 .super-title {
+    color: var(--content-primary, #141618);
+    font-family: var(--ff-body, "Halis R");
+    font-size: var(--size-h-s, 18px);
+    font-style: normal;
+    font-weight: 700;
+    line-height: var(--size-h-xs, 16px);
+    letter-spacing: -0.72px;
+    margin-bottom: 24px;
+    text-transform: inherit;
+    text-align: left !important;
+    padding-left: 20px;
+    position: relative !important;
+    padding-right: 60px !important;
+}
+
+/* Carousel containers */
+#rebuy-widget-226077 .rebuy-product-grid,
+#rebuy-widget-226077 .splide {
+    padding-right: 0 !important;
+}
+
+/* ============================================
+ Widget card layout
+ ============================================ */
+
+/* Individual product cards */
+#rebuy-widget-226077 .rebuy-product-block {
+    min-width: 240px !important; 
+    max-width: 240px !important; 
+    flex-shrink: 0 !important;
+    display: grid !important;
+    grid-template-columns: 70px 1fr !important; /* Fixed 70px for image, rest for content */
+    grid-template-rows: 1fr auto !important;
+    background: white !important;
+    border: 1px solid #e5e5e5 !important;
+    border-radius: 8px !important;
+    padding: 12px !important; /* Increased from 8px */
+    gap: 6px !important; /* Increased from 8px */
+    align-items: start !important;
+    box-sizing: border-box !important;
+    margin-right: 12px !important;
+}
+
+/* Product image */
+#rebuy-widget-226077 .rebuy-product-media {
+    grid-column: 1 !important;
+    grid-row: 1 / 3 !important; /* Span both rows */
+    width: 70px !important;
+    height: 70px !important;
+    flex-shrink: 0 !important;
+}
+
+#rebuy-widget-226077 .rebuy-product-image {
+    width: 70px !important;
+    height: 70px !important;
+    display: block !important;
+    border-radius: 6px !important;
+    overflow: hidden !important;
+}
+
+#rebuy-widget-226077 .rebuy-product-image img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+}
+
+/* Product content area */
+#rebuy-widget-226077 .rebuy-product-info {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 6px !important; /* Consistent spacing */
+    align-items: flex-start !important;
+    justify-content: flex-start !important;
+    min-width: 0 !important;
+    min-height: 130px !important; /* Increased from 120px for better spacing */
+    padding-top: 2px !important; /* Small offset to align with image */
+}
+
+/* ============================================
+Widget card info styling
+ ============================================ */
+
+/* Product title */
+#rebuy-widget-226077 .rebuy-product-title {
+    color: var(--brand-black, #000) !important;
+    font-family: var(--ff-body, "Halis R") !important;
+    font-size: 14px !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+    line-height: 16px !important;
+    margin: 0 !important;
+    text-decoration: none !important;
+    text-align: left !important;
+    padding-left: 2px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: -webkit-box !important;
+    -webkit-line-clamp: 2 !important;
+    -webkit-box-orient: vertical !important;
+}
+
+/* Badge container */
+#rebuy-widget-226077 .custom-widget-badges {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    margin: 0 !important;
+    align-items: flex-start !important;
+}
+
+/* Individual badges */
+#rebuy-widget-226077 .custom-widget-badge {
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    line-height: 12px !important;
+    padding: 2px 6px !important;
+    border-radius: 4px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    white-space: nowrap !important;
+    margin: 0 !important;
+    display: inline-block !important;
+    font-family: var(--ff-body, "Halis R") !important;
+}
+
+/* Price section - pushed to bottom */
+#rebuy-widget-226077 .rebuy-product-price {
+    margin-top: auto !important; /* This pushes the price to the bottom */
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+}
+
+/* Sale price styling */
+#rebuy-widget-226077 .rebuy-product-price .rebuy-money.sale {
+    font-family: var(--ff-body, "Halis R") !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    line-height: 16px !important;
+    color: var(--brand-hotRed, #ff0000) !important;
+    margin: 0 !important;
+    text-decoration: none !important;
+}
+
+/* Compare at price styling */
+#rebuy-widget-226077 .rebuy-product-price .rebuy-money.compare-at {
+    font-family: var(--ff-body, "Halis R") !important;
+    font-size: 12px !important;
+    font-weight: 400 !important;
+    line-height: 14px !important;
+    color: var(--brand-midGrey, #696C78) !important;
+    text-decoration: line-through !important;
+    margin: 0 !important;
+}
+
+/* Regular price styling */
+#rebuy-widget-226077 .rebuy-product-price .rebuy-money {
+    font-family: var(--ff-body, "Halis R") !important;
+    font-size: 14px !important;
+    font-weight: 700 !important;
+    line-height: 16px !important;
+    color: var(--brand-black, #000) !important;
+    margin: 0 !important;
+}
+
+/* Grundpreis styling */
+#rebuy-widget-226077 .rebuy-grundpreis {
+    color: var(--brand-midGrey, #696C78) !important;
+    font-family: var(--ff-body, "Halis R") !important;
+    font-size: 10px !important;
+    font-style: normal !important;
+    font-weight: 400 !important;
+    line-height: 14px !important;
+    letter-spacing: 0.2px !important;
+    text-transform: uppercase !important;
+    margin: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+
+/* ============================================
+Widget card actions (the button part)
+ ============================================ */
+
+/* Button container */
+#rebuy-widget-226077 .rebuy-product-actions {
+    grid-column: 1 / 3 !important; /* Span both columns for full width */
+    grid-row: 2 !important;
+    display: flex !important;
+    justify-content: stretch !important;
+    align-items: flex-end !important;
+    margin-top: 12px !important; /* Space between content and button */
+}
+
+/* Button styling */
+#rebuy-widget-226077 .rebuy-button {
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 10px 12px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    line-height: 14px !important;
+    color: var(--brand-black, #000) !important; 
+    background-color: white !important;
+    white-space: nowrap !important;
+    cursor: pointer !important;
+    border: 1px solid var(--brand-black, #000) !important;
+    border-radius: 178.044px !important;
+    letter-spacing: 0.28px !important;
+    font-family: var(--ff-body) !important;
+    text-transform: uppercase !important;
+    text-decoration: none !important;
+    transition: all 0.2s ease !important;
+}
+
+#rebuy-widget-226077 .rebuy-button:hover {
+    background-color: var(--brand-black, #000) !important;
+    color: white !important;
+}
+
+
+/* ============================================
+   Cart Footer
+   ============================================ */
+
+
+
+/* Add top border to footer anchor to separate from widget above */
+[data-rebuy-cart-anchor="footer"] {
+    border-top: 1px solid #e5e5e5 !important;
+    padding-top: 8px !important;
+}
+
+
+/* ============================================
+ Discount input
+ ============================================ */
+
+/* Override Rebuy's v-show="hasItems()" behavior */
+[data-rebuy-component="discount-input"] {
+    display: block !important;
+}
+
+/* Rebuy needs the input populated by text to render it - we remove the text here via CSS */
+[data-rebuy-component="discount-input"] .rebuy-input::placeholder {
+    color: var(--brand-midGrey, #696C78);
+    font-family: var(--ff-body, "Halis R");
+    font-size: var(--size-body-m, 16px);
+    font-style: normal;
+    font-weight: 400;
+    line-height: var(--size-body-xl, 20px); /* 125% */
+}
+
+/* Container styling - flex layout matching Figma */
+[data-rebuy-component="discount-input"] {
+    display: flex !important;
+    padding: 8px 16px 12px !important;
+    align-self: stretch !important;
+    gap: 12px !important;
+}
+
+
+/* Discount code text */
+.rebuy-cart__discount-tag-text {
+    color: var(--brand-black, #000) !important;
+    font-family: var(--ff-body, "Halis R") !important;
+    font-size: 14px !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+    line-height: 16px !important;
+    letter-spacing: 0.24px !important;
+    text-transform: uppercase !important;
+    padding-top: 3px !important;
+    flex: 1 !important;
+    margin: 0 !important;
+}
+
+/* Input wrapper - takes up most space */
+[data-rebuy-component="discount-input"] .rebuy-input-wrapper {
+    flex: 1 !important;
+    position: relative !important;
+}
+
+/* Hide the floating label since we have our own label above */
+[data-rebuy-component="discount-input"] .rebuy-input-label {
+    display: none !important;
+}
+
+/* Add "RABATTCODE EINFÜGEN" label above input using pseudo-element */
+[data-rebuy-component="discount-input"]::before {
+    content: "RABATTCODE EINFÜGEN" !important;
+    overflow: hidden !important;
+    color: var(--brand-black, #000) !important;
+    text-overflow: ellipsis !important;
+    font-family: var(--ff-body, "Halis R") !important;
+    font-size: 14px !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+    line-height: 14px !important;
+    letter-spacing: 0.24px !important;
+    text-transform: uppercase !important;
+    display: block !important;
+    width: 100% !important;
+}
+
+/* Hide delivery note when tags present */
+[data-rebuy-component="discount-input"]:has(.rebuy-cart__discount-tags)::before {
+    display: none !important;
+}
+
+/* Fallback for old browsers wihtout has() - hide delivery note when tags are present */
+.rebuy-cart__discount-tags ~ * [data-rebuy-component="discount-input"]::before,
+[data-rebuy-component="discount-input"].has-discount-tags::before {
+    display: none !important;
+}
+
+/* Input field styling */
+[data-rebuy-component="discount-input"] .rebuy-input {
+    width: 100% !important;
+    height: 52px !important;
+    padding: 12px 16px !important;
+    border: 1px solid #e5e5e5 !important;
+    border-radius: 12px !important;
+    font-size: 14px !important;
+    line-height: 20px !important;
+    background: white !important;
+    box-sizing: border-box !important;
+}
+
+/* Input placeholder styling */
+[data-rebuy-component="discount-input"] .rebuy-input::placeholder {
+    color: #9ca3af !important;
+    text-transform: none !important;
+}
+/* Discount apply button */
+[data-rebuy-component="discount-input"] .rebuy-button {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important; 
+    min-height: 52px !important;
+    max-width: 52px !important; 
+    max-height: 52px !important; 
+    border-radius: 50% !important; 
+    border: 1px solid var(--brand-black, #000) !important;
+    background: var(--brand-white, #FFF) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    padding: 0 !important; 
+    font-size: 0 !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+}
+
+/* Hide the button text but keep it in DOM for Rebuy */
+[data-rebuy-component="discount-input"] .rebuy-button span {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Add arrow icon using pseudo-element */
+[data-rebuy-component="discount-input"] .rebuy-button::before {
+    content: "→" !important;
+    font-size: 18px !important;
+    font-weight: normal !important;
+    color: var(--brand-black, #000) !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transform: scaleX(1.5) !important;
+}
+
+/* Button hover effect */
+[data-rebuy-component="discount-input"] .rebuy-button:hover {
+    background: #f5f5f5 !important;
+    transform: scale(1.02) !important;
+    transition: all 0.2s ease !important;
+}
+
+/* Delivery message */
+p.rebuy-cart__flyout-subtotal-label {
+    color: #1E5D00 !important;
+    font-family: var(--ff-body, "Halis R") !important;
+    font-size: 14px !important;
+    font-style: normal !important;
+    font-weight: 700 !important;
+    line-height: 16px !important;
+    text-align: left !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 0 !important;
+    padding: 6px 16px !important;
+}
+
+/* Delivery message SVG icon */
+p.rebuy-cart__flyout-subtotal-label svg {
+    flex-shrink: 0 !important;
+    width: 16px !important;
+    height: 16px !important;
+}
+
+/* This rule hides the subtotal block, which we cannot do in the Rebuy Admin */
+[data-rebuy-component="cart-subtotal"] {
+    display: none !important;
+}
+/* This removes the Cart Subtotal Sale Strikethrough Amount, IF the subtotal block above is visible
+Might be an option for the future  */
+/* [data-rebuy-component='cart-subtotal'] .rebuy-cart__flyout-subtotal-compare-amount {
+    display: none;
+}
+
+/* Hide compare-at price specifically when used in button context */
+.cart-subtotal .rebuy-cart__flyout-subtotal-compare-amount {
+    display: none !important;
+}
+
+[data-rebuy-component="checkout-area"] .rebuy-cart__checkout-button {
+    background: linear-gradient(
+        86deg,
+        var(--brand-hotPink, #fc0b99) 8.43%,
+        var(--brand-hotRed, #ff105c) 52.18%,
+        var(--brand-hotPink, #fc0b99) 93.38%
+    ) !important;
+    color: var(--brand-white, #ffffff) !important;
+    font-family: var(--ff-body, sans-serif) !important;
+    font-size: 14px !important;
+    line-height: 18px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    padding: 20px !important;
+    border-radius: 50px !important;
+    border: none !important;
+    cursor: pointer !important;
+    transition: background 0.3s ease, all 0.2s ease !important;
+    width: 100% !important;
+    min-height: 48px !important;
+    margin: 0 !important;
+}
+
+/* Hover effect for the checkout button */
+[data-rebuy-component="checkout-area"] .rebuy-cart__checkout-button:hover {
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(252, 11, 153, 0.3) !important;
+}
+
+/* Ensure button text styling */
+[data-rebuy-component="checkout-area"] .rebuy-cart__checkout-button span {
+    color: var(--brand-white, #ffffff) !important;
+    font-weight: 700 !important;
+}
+
+/* Zahlmethoden in the cart */
+.cart-payment-icons {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    margin-top: 12px !important;
+    padding: 0 20px !important;
+}
+
+/* Individual payment icon styling */
+.cart-payment-icon {
+    flex-shrink: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+/* Ensure SVGs are sized consistently */
+.cart-payment-icon svg {
+    height: 24px !important;
+    width: auto !important;
+    max-width: 45px !important;
+}
+
+/* Hide both delivery message AND payment icons when cart is empty */
+[data-rebuy-cart-anchor="footer"]:not(:has([data-rebuy-component="checkout-area"]:not([style*="display: none"]))) [data-rebuy-custom-code] p.rebuy-cart__flyout-subtotal-label,
+[data-rebuy-cart-anchor="footer"]:not(:has([data-rebuy-component="checkout-area"]:not([style*="display: none"]))) [data-rebuy-custom-code] .cart-payment-icons {
+    display: none !important;
+}
+
+
+/* ============================================
+Widget pagination and arrows
+ ============================================ */
+
+/* Hide pagination dots on mobile (default hidden) */
+#rebuy-widget-226077 .splide__pagination,
+#rebuy-widget-226077 .rebuy-carousel__pagination {
+    display: none !important;
+}
+
+/* Hide arrows on mobile by default */
+#rebuy-widget-226077 .splide__arrows,
+#rebuy-widget-226077 .rebuy-carousel__arrows,
+#rebuy-widget-226077 .splide__arrow,
+#rebuy-widget-226077 .rebuy-carousel__arrow {
+    display: none !important;
+}
+
+/* Show arrows on desktop (768px and up) */
+@media (min-width: 768px) {
+    #rebuy-widget-226077 .splide__arrows,
+    #rebuy-widget-226077 .rebuy-carousel__arrows {
+        display: block !important;
+    }
+    
+    #rebuy-widget-226077 .splide__arrow,
+    #rebuy-widget-226077 .rebuy-carousel__arrow {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    
+    /* Style arrow container a bit */
+    #rebuy-widget-226077 .splide__arrow--prev,
+    #rebuy-widget-226077 .rebuy-carousel__arrow--prev,
+    #rebuy-widget-226077 .splide__arrow--next,
+    #rebuy-widget-226077 .rebuy-carousel__arrow--next  {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 50% !important;
+        background: white !important;
+        border: 1px solid #e5e5e5 !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+        z-index: 10 !important;
+        cursor: pointer !important;
+    }
+    
+    /* Arrow icons styling */
+    #rebuy-widget-226077 .splide__arrow svg,
+    #rebuy-widget-226077 .rebuy-carousel__arrow svg {
+        width: 16px !important;
+        height: 16px !important;
+        fill: #000 !important;
+    }
+    
+    /* Hover effects for arrows */
+    #rebuy-widget-226077 .splide__arrow:hover,
+    #rebuy-widget-226077 .rebuy-carousel__arrow:hover {
+        background: #f5f5f5 !important;
+        border-color: #ccc !important;
+    }
+}
+```
