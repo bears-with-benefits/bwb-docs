@@ -16,3 +16,5 @@ There is no automated test suite, so contributors must self-review. During previ
 
 ## Commit & Pull Request Guidelines
 Commits in this repo are concise and descriptive (e.g., "Adding images, tidying links sidebar"). Use imperative mood when possible, limit to 70 characters, and group related edits per commit. Pull requests should include a short summary, screenshots for visual changes, links to related tickets, and a checklist of manual verification steps. Ensure PR titles mirror the main change and request review from the documentation maintainer group.
+
+Commits to this repo will automatically redeploy to Github Pages.
