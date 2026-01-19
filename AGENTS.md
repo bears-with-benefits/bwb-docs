@@ -1,7 +1,7 @@
 # Repository Guidelines
 
 ## Project Structure & Module Organization
-The docs are authored in the repository root as numbered Markdown files (for example, `1introduction-and-overview.md` through `11project-management-and-reporting.md`). Numbers control sidebar order within Docsify, so keep two-digit prefixes when adding sections. `_sidebar.md` defines navigation labels, while `assets/` stores screenshots and PDFs referenced across topics. `index.html` contains the Docsify bootstrap configuration; edit it only when adjusting global theming or scripts.
+The top-level docs are authored in the repository root as numbered Markdown files (for example, `1introduction-and-overview.md` through `11project-management-and-reporting.md`). Technical documentation now lives under `technical-docs/` with its own `_sidebar.md`. Keep numeric prefixes for top-level sections, while technical-docs files use clear kebab-case names. `_sidebar.md` defines navigation labels, and `assets/` stores screenshots and PDFs referenced across topics. `index.html` contains the Docsify bootstrap configuration; edit it only when adjusting global theming or scripts.
 
 ## Build, Test, and Development Commands
 - `npx docsify-cli@latest serve .` — Local preview at http://localhost:3000 with live reload. Use this before opening a PR to verify navigation and links.
